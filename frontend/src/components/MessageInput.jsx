@@ -1,107 +1,134 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X } from "lucide-react";
-import toast from "react-hot-toast";
+import { useAuthStore } from "../store/useAuthStore";
 
 const MessageInput = () => {
+  const { selectedUser, sendMessage } = useChatStore();
+  const { authUser, setTypingStatus } = useAuthStore();
   const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
+  const [image, setImage] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const typingTimeoutRef = useRef(null);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleTyping = () => {
+    if (!selectedUser) return;
+
+    if (!isTyping) {
+      setIsTyping(true);
+      setTypingStatus(selectedUser._id, true);
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-  const removeImage = () => {
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      setTypingStatus(selectedUser._id, false);
+    }, 2000);
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    if (!text.trim() && !image) return;
 
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
-
+      await sendMessage({ text, image });
       setText("");
-      setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setImage(null);
+      setIsTyping(false);
+      setTypingStatus(selectedUser._id, false);
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Error sending message:", error);
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  if (!selectedUser) return null;
+
   return (
-    <div className="p-3 border-t border-base-300 bg-base-100">
-      {imagePreview && (
-        <div className="mb-3">
-          <div className="relative inline-block">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-24 h-24 object-cover rounded-xl border border-base-300"
-            />
-            <button
-              onClick={removeImage}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-base-300
-              flex items-center justify-center shadow-lg"
-              type="button"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
+    <form onSubmit={handleSendMessage} className="flex flex-col gap-2">
+      {image && (
+        <div className="relative w-32 h-32">
+          <img
+            src={image}
+            alt="Preview"
+            className="w-full h-full object-cover rounded-lg"
+          />
+          <button
+            type="button"
+            onClick={removeImage}
+            className="absolute -top-2 -right-2 btn btn-circle btn-sm bg-base-100"
+          >
+            <X className="size-3" />
+          </button>
         </div>
       )}
-
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        <button
-          type="button"
-          className="btn btn-circle btn-ghost"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Image className="size-6" />
-        </button>
-
+      <div className="flex items-center gap-2">
         <input
           type="text"
-          className="flex-1 input input-bordered rounded-full text-base"
-          placeholder="Message..."
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            handleTyping();
+          }}
+          placeholder="Type a message..."
+          className="input input-bordered flex-1 text-sm sm:text-base"
         />
-
+        
         <input
           type="file"
-          accept="image/*"
-          className="hidden"
           ref={fileInputRef}
           onChange={handleImageChange}
+          accept="image/*"
+          className="hidden"
         />
-
+        
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="btn btn-ghost btn-sm sm:btn-md"
+        >
+          <Image className="size-4 sm:size-5" />
+        </button>
+        
         <button
           type="submit"
-          className="btn btn-circle btn-primary"
-          disabled={!text.trim() && !imagePreview}
+          disabled={!text.trim() && !image}
+          className="btn btn-primary btn-sm sm:btn-md"
         >
-          <Send className="size-6" />
+          <Send className="size-4 sm:size-5" />
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 };
+
 export default MessageInput;

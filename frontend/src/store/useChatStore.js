@@ -33,11 +33,34 @@ export const useChatStore = create((set, get) => ({
       set({ isMessagesLoading: false });
     }
   },
+
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     try {
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
       set({ messages: [...messages, res.data] });
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
+  },
+
+  clearChat: async (userId) => {
+    try {
+      await axiosInstance.delete(`/messages/clear/${userId}`);
+      set({ messages: [] });
+      toast.success("Chat cleared successfully");
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
+  },
+
+  deleteChat: async (userId, messageId) => {
+    try {
+      await axiosInstance.delete(`/messages/delete/${userId}/${messageId}`);
+      set(state => ({
+        messages: state.messages.filter(msg => msg._id !== messageId)
+      }));
+      toast.success("Message deleted successfully");
     } catch (error) {
       toast.error(error.response.data.message);
     }

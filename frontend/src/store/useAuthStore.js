@@ -12,6 +12,8 @@ export const useAuthStore = create((set, get) => ({
   isUpdatingProfile: false,
   isCheckingAuth: true,
   onlineUsers: [],
+  userLastSeen: {},
+  typingUsers: {},
   socket: null,
 
   checkAuth: async () => {
@@ -102,6 +104,9 @@ export const useAuthStore = create((set, get) => ({
       query: {
         userId: authUser._id,
       },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
     socket.connect();
 
@@ -110,8 +115,69 @@ export const useAuthStore = create((set, get) => ({
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    socket.on("userLastSeen", (lastSeenData) => {
+      set((state) => ({
+        userLastSeen: {
+          ...state.userLastSeen,
+          ...lastSeenData
+        }
+      }));
+    });
+
+    socket.on("userOnlineStatus", ({ userId, isOnline }) => {
+      set((state) => {
+        const newOnlineUsers = isOnline
+          ? [...new Set([...state.onlineUsers, userId])]
+          : state.onlineUsers.filter(id => id !== userId);
+        return { onlineUsers: newOnlineUsers };
+      });
+    });
+
+    socket.on("typingStatus", ({ senderId, isTyping }) => {
+      set((state) => ({
+        typingUsers: {
+          ...state.typingUsers,
+          [senderId]: isTyping
+        }
+      }));
+    });
+
+    socket.io.on("reconnect", () => {
+      console.log("Reconnected to socket server");
+      if (authUser) {
+        socket.emit("userReconnected", { userId: authUser._id });
+      }
+    });
+
+    socket.io.on("reconnect_error", () => {
+      console.log("Reconnection error");
+    });
   },
+
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
+  },
+
+  isRecentlyOffline: (userId) => {
+    const lastSeen = get().userLastSeen[userId];
+    if (!lastSeen) return false;
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    return lastSeen > fiveMinutesAgo;
+  },
+
+  getLastSeenTime: (userId) => {
+    return get().userLastSeen[userId];
+  },
+
+  setTypingStatus: (receiverId, isTyping) => {
+    const socket = get().socket;
+    if (socket) {
+      socket.emit("typing", { receiverId, isTyping });
+    }
+  },
+
+  isUserTyping: (userId) => {
+    return get().typingUsers[userId] || false;
   },
 }));
