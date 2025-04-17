@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from "daisyui";
-import scrollbar from "tailwind-scrollbar";
 
 export default {
   content: [
@@ -8,45 +7,10 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      scrollbar: ['rounded'],
-    },
+    extend: {},
   },
-  plugins: [
-    daisyui,
-    scrollbar,
-  ],
+  plugins: [daisyui],
   daisyui: {
-    themes: [
-      "light",
-      "dark",
-      "cupcake",
-      "bumblebee",
-      "emerald",
-      "corporate",
-      "synthwave",
-      "retro",
-      "cyberpunk",
-      "valentine",
-      "halloween",
-      "garden",
-      "forest",
-      "aqua",
-      "lofi",
-      "pastel",
-      "fantasy",
-      "wireframe",
-      "black",
-      "luxury",
-      "dracula",
-      "cmyk",
-      "autumn",
-      "business",
-      "acid",
-      "lemonade",
-      "night",
-      "coffee",
-      "winter"
-    ],
+    themes: ["light", "dark"],
   },
 }

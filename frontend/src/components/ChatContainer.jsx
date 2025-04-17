@@ -2,10 +2,13 @@ import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, CheckCheck, MoreVertical, Settings, Trash2, MessageSquareX, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import ChatHeader from "./ChatHeader";
+import MessageInput from "./MessageInput";
+import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 import Message from "./Message";
-import MessageSkeleton from "./skeletons/MessageSkeleton";
 
 const ChatContainer = () => {
   const {
@@ -77,6 +80,7 @@ const ChatContainer = () => {
     });
   };
 
+  // Close options when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showOptions && !event.target.closest('.options-menu')) {
@@ -88,19 +92,30 @@ const ChatContainer = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showOptions]);
 
+  const getStatusDot = () => {
+    if (onlineUsers.includes(selectedUser._id)) {
+      return <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>;
+    } else if (isRecentlyOffline(selectedUser._id)) {
+      return <div className="w-2 h-2 rounded-full bg-info"></div>;
+    } else {
+      return <div className="w-2 h-2 rounded-full bg-error"></div>;
+    }
+  };
+
   if (isMessagesLoading) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-base-100">
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 p-3">
+      <div className="fixed inset-0 flex flex-col">
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 p-3 sm:p-4">
           <button 
             onClick={() => setSelectedUser(null)}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="size-4" />
-            <span className="text-sm">Back to chats</span>
+            <ArrowLeft className="size-4 sm:size-6" />
+            <span className="text-sm sm:text-base">Back to chats</span>
           </button>
         </div>
         <MessageSkeleton />
+        <MessageInput />
       </div>
     );
   }
@@ -108,10 +123,9 @@ const ChatContainer = () => {
   if (!selectedUser) return null;
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-base-100">
-      {/* Header */}
+    <div className="fixed inset-0 flex flex-col overflow-hidden">
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 flex items-center justify-between p-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               setSelectedUser(null);
@@ -122,33 +136,32 @@ const ChatContainer = () => {
           >
             <ArrowLeft className="size-4" />
           </button>
-          
-          <div className="flex items-center gap-3">
-            <div className="avatar">
-              <div className="w-10 h-10 rounded-full">
-                <img src={selectedUser.profilePic} alt="avatar" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{selectedUser.fullName}</span>
-                <div className={`w-2 h-2 rounded-full ${
-                  onlineUsers.includes(selectedUser._id) ? 'bg-green-500 animate-pulse' :
-                  isRecentlyOffline(selectedUser._id) ? 'bg-blue-500' :
-                  'bg-red-500'
-                }`}></div>
-              </div>
-              {isUserTyping(selectedUser._id) && (
-                <div className="flex items-center gap-1 text-xs text-base-content/70">
-                  <span>typing</span>
-                  <span className="flex gap-0.5">
-                    <span className="animate-bounce">.</span>
-                    <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>.</span>
-                    <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>.</span>
-                  </span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="avatar">
+                <div className="w-10 h-10 rounded-full">
+                  <img src={selectedUser.profilePic} alt="avatar" />
                 </div>
-              )}
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold">{selectedUser.fullName}</span>
+                {isUserTyping(selectedUser._id) && (
+                  <div className="flex items-center gap-1 text-xs text-base-content/70">
+                    <span>typing</span>
+                    <span className="flex gap-1">
+                      <span className="animate-bounce">.</span>
+                      <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>.</span>
+                      <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>.</span>
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
+            <div className={`w-2 h-2 rounded-full ${
+              onlineUsers.includes(selectedUser._id) ? 'bg-green-500 animate-pulse' :
+              isRecentlyOffline(selectedUser._id) ? 'bg-blue-500' :
+              'bg-red-500'
+            }`}></div>
           </div>
         </div>
 
@@ -224,10 +237,9 @@ const ChatContainer = () => {
         </div>
       </div>
 
-      {/* Messages */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 bg-base-100"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-base-100 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100"
       >
         {messages.map((message) => (
           <Message 
@@ -241,18 +253,8 @@ const ChatContainer = () => {
         <div ref={messageEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="sticky bottom-0 z-10 bg-base-100 border-t border-base-300">
-        <div className="container mx-auto max-w-4xl px-4 py-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              className="input input-bordered flex-1"
-            />
-            <button className="btn btn-primary">Send</button>
-          </div>
-        </div>
+      <div className="sticky bottom-0 z-10 bg-base-100 p-3 border-t border-base-300">
+        <MessageInput />
       </div>
     </div>
   );
