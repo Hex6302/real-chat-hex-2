@@ -21,7 +21,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-base-200">
+    <div className="min-h-screen bg-base-200">
       {/* Show navbar only when no chat is selected */}
       {!selectedUser && (
         <div className="fixed top-0 left-0 right-0 z-50">
@@ -30,21 +30,18 @@ const HomePage = () => {
       )}
 
       {/* Main content - adjust padding when navbar is visible */}
-      <div className={`h-full ${!selectedUser ? 'pt-16' : ''}`}>
-        <div className="h-full bg-base-100">
-          <div className="h-full relative flex">
+      <div className={`min-h-screen ${!selectedUser ? 'pt-16' : ''}`}>
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="h-full">
             {/* Sidebar - only shown when no chat is selected */}
             {!selectedUser && (
-              <div className="h-full w-full md:w-80 lg:w-96">
+              <div className="h-full">
                 <Sidebar />
               </div>
             )}
 
             {/* Chat Container - full width when chat is selected */}
-            <div className={`
-              h-full
-              ${selectedUser ? 'w-full' : 'hidden md:block flex-1'}
-            `}>
+            <div className="h-full">
               {selectedUser ? <ChatContainer /> : <NoChatSelected />}
             </div>
           </div>

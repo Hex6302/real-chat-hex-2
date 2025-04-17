@@ -19,7 +19,7 @@ const Sidebar = () => {
 
   if (isUsersLoading) {
     return (
-      <div className="h-full flex flex-col bg-base-100">
+      <div className="flex flex-col bg-base-100 rounded-lg shadow-lg">
         <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ const Sidebar = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-base-100">
+    <div className="flex flex-col bg-base-100 rounded-lg shadow-lg">
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -53,15 +53,15 @@ const Sidebar = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <button
               key={user._id}
               onClick={() => setSelectedUser(user)}
               className={`
-                w-full p-2 flex items-center gap-2 border-b border-base-200
-                active:bg-base-200 transition-colors
+                w-full p-3 flex items-center gap-3 border-b border-base-200
+                hover:bg-base-200 transition-colors
                 ${selectedUser?._id === user._id ? "bg-base-200" : ""}
               `}
             >
@@ -69,7 +69,7 @@ const Sidebar = () => {
                 <img
                   src={user.profilePic || "/avatar.png"}
                   alt={user.name}
-                  className="size-10 object-cover rounded-full"
+                  className="w-10 h-10 object-cover rounded-full"
                 />
               </div>
 
@@ -77,11 +77,11 @@ const Sidebar = () => {
                 <div className="flex items-center gap-2">
                   <div className="font-medium text-sm truncate">{user.fullName}</div>
                   {onlineUsers.includes(user._id) ? (
-                    <span className="size-1.5 bg-green-500 rounded-full flex-shrink-0" />
+                    <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
                   ) : isRecentlyOffline(user._id) ? (
-                    <span className="size-1.5 bg-blue-500 rounded-full flex-shrink-0" />
+                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
                   ) : (
-                    <span className="size-1.5 bg-red-500 rounded-full flex-shrink-0" />
+                    <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" />
                   )}
                 </div>
                 <div className="text-xs text-base-content/60">
@@ -92,21 +92,16 @@ const Sidebar = () => {
                     : "Offline"}
                 </div>
               </div>
-
-              {user.unreadCount > 0 && (
-                <div className="flex-shrink-0">
-                  <span className="badge badge-xs badge-primary">{user.unreadCount}</span>
-                </div>
-              )}
             </button>
           ))
         ) : (
-          <div className="p-4 text-center text-base-content/60 text-sm">
-            {showOnlineOnly ? "No online users" : "No users found"}
+          <div className="p-4 text-center text-base-content/60">
+            No users found
           </div>
         )}
       </div>
     </div>
   );
 };
+
 export default Sidebar;
