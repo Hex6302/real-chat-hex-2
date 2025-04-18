@@ -22,6 +22,11 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-base-200">
+      {/* Test banner - remove this after confirming deployment works */}
+      <div className="bg-primary text-primary-content p-2 text-center">
+        Deployment Test - If you see this, changes are working!
+      </div>
+
       {/* Show navbar only when no chat is selected */}
       {!selectedUser && (
         <div className="fixed top-0 left-0 right-0 z-50">
