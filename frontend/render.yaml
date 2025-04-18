@@ -2,13 +2,10 @@ services:
   - type: web
     name: chat-app-frontend
     env: node
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run preview
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: VITE_API_URL
         sync: false
-      - key: VITE_WS_URL
-        sync: false
       - key: NODE_ENV
-        value: production
-    staticPublishPath: ./frontend/dist 
+        value: production 
